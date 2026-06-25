@@ -3,3 +3,7 @@ spring:
     name: invoice-manager
   profiles:
     active: dev
+  jpa:
+    open-in-view: false
+server:
+  port: 8093
