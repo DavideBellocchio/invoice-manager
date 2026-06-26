@@ -13,13 +13,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="prodotto")
+@Table(name="product")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class Prodotto {
+public class Product {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
