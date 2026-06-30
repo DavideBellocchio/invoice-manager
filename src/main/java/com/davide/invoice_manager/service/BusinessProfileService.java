@@ -1,5 +1,7 @@
 package com.davide.invoice_manager.service;
 
+import com.davide.invoice_manager.command.CreateBusinessProfileCommand;
+import com.davide.invoice_manager.command.UpdateBusinessProfileCommand;
 import com.davide.invoice_manager.domain.BusinessProfile;
 import com.davide.invoice_manager.domain.User;
 import com.davide.invoice_manager.exception.ResourceNotFoundException;
@@ -14,6 +16,7 @@ import java.util.List;
 public class BusinessProfileService {
 
     private final BusinessProfileRepository businessProfileRepository;
+    private final UserService userService;
 
     public List<BusinessProfile> findAll() {
         return businessProfileRepository.findAll();
@@ -29,40 +32,47 @@ public class BusinessProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("BusinessProfile not found for id: " + id));
     }
 
-    public BusinessProfile createBusinessProfile(BusinessProfile businessProfile) {
-        return businessProfileRepository.save(businessProfile);
+    public BusinessProfile createBusinessProfile(CreateBusinessProfileCommand command) {
+        User user = null;
+        if(command.userId() != null){
+            user = userService.getUserById(command.userId());
+        }
+        BusinessProfile bp = new BusinessProfile();
+        bp.setBusinessName(command.businessName());
+        bp.setFiscalCode(command.fiscalCode());
+        bp.setVatCode(command.vatCode());
+        bp.setPersonType(command.personType());
+        bp.setPec(command.pec());
+        bp.setPhoneNumber(command.phoneNumber());
+        bp.setUser(user);
+        return businessProfileRepository.save(bp);
     }
 
-    public BusinessProfile updateBusinessProfile(BusinessProfile businessProfile) {
-        BusinessProfile existingBusinessProfile = businessProfileRepository.findById(businessProfile.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("BusinessProfile not found for id: " + businessProfile.getId()));
+    public BusinessProfile updateBusinessProfile(Long businessProfileId, UpdateBusinessProfileCommand command) {
+        BusinessProfile existingBusinessProfile = getBusinessProfileById(businessProfileId);
 
-        if(businessProfile.getBusinessName() != null) {
-            existingBusinessProfile.setBusinessName(businessProfile.getBusinessName());
+        if(command.businessName() != null) {
+            existingBusinessProfile.setBusinessName(command.businessName());
         }
 
-        if(businessProfile.getFiscalCode() != null) {
-            existingBusinessProfile.setFiscalCode(businessProfile.getFiscalCode());
+        if(command.fiscalCode() != null) {
+            existingBusinessProfile.setFiscalCode(command.fiscalCode());
         }
 
-        if(businessProfile.getVatCode() != null) {
-            existingBusinessProfile.setVatCode(businessProfile.getVatCode());
+        if(command.vatCode() != null) {
+            existingBusinessProfile.setVatCode(command.vatCode());
         }
 
-        if(businessProfile.getPersonType() != null) {
-            existingBusinessProfile.setPersonType(businessProfile.getPersonType());
+        if(command.personType() != null) {
+            existingBusinessProfile.setPersonType(command.personType());
         }
 
-        if(businessProfile.getPec() != null) {
-            existingBusinessProfile.setPec(businessProfile.getPec());
+        if(command.pec() != null) {
+            existingBusinessProfile.setPec(command.pec());
         }
 
-        if(businessProfile.getPhoneNumber() != null) {
-            existingBusinessProfile.setPhoneNumber(businessProfile.getPhoneNumber());
-        }
-
-        if(businessProfile.getUser() != null) {
-            existingBusinessProfile.setUser(businessProfile.getUser());
+        if(command.phoneNumber() != null) {
+            existingBusinessProfile.setPhoneNumber(command.phoneNumber());
         }
 
         return businessProfileRepository.save(existingBusinessProfile);

@@ -1,5 +1,7 @@
 package com.davide.invoice_manager.service;
 
+import com.davide.invoice_manager.command.CreateProductCommand;
+import com.davide.invoice_manager.command.UpdateProductCommand;
 import com.davide.invoice_manager.domain.Product;
 import com.davide.invoice_manager.exception.ResourceNotFoundException;
 import com.davide.invoice_manager.repository.ProductRepository;
@@ -27,21 +29,18 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
-    public Product addProduct(Product product) {
+    public Product addProduct(CreateProductCommand command) {
+        Product product = new Product();
+        product.setName(command.name());
+        product.setDescription(command.description());
+        product.setPrice(command.price());
         return productRepository.save(product);
     }
 
-    public Product updateProduct(Product product) {
-        Product p = productRepository.findById(product.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + product.getId()));
-        if (product.getName() != null) {
-            p.setName(product.getName());
-        }
-        if (product.getDescription() != null) {
-            p.setDescription(product.getDescription());
-        }
-        if (product.getPrice() != null) {
-            p.setPrice(product.getPrice());
+    public Product updateProduct(Long productId, UpdateProductCommand command) {
+        Product p = findById(productId);
+        if (command.price() != null) {
+            p.setPrice(command.price() );
         }
         return productRepository.save(p);
     }

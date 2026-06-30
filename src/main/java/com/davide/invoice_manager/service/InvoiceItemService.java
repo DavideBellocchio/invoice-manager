@@ -1,7 +1,10 @@
 package com.davide.invoice_manager.service;
 
+import com.davide.invoice_manager.command.CreateInvoiceItemCommand;
+import com.davide.invoice_manager.command.UpdateInvoiceItemCommand;
 import com.davide.invoice_manager.domain.Invoice;
 import com.davide.invoice_manager.domain.InvoiceItem;
+import com.davide.invoice_manager.domain.Product;
 import com.davide.invoice_manager.exception.ResourceNotFoundException;
 import com.davide.invoice_manager.repository.InvoiceItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ public class InvoiceItemService {
 
     private final InvoiceItemRepository invoiceItemRepository;
     private final InvoiceService invoiceService;
+    private final ProductService productService;
 
     public List<InvoiceItem> findAllByInvoice(Invoice invoice) {
         return invoiceItemRepository.findByInvoice(invoice);
@@ -26,23 +30,22 @@ public class InvoiceItemService {
         return invoiceItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("InvoiceItem not found with id: " + id ));
     }
-    public InvoiceItem addInvoiceItem(InvoiceItem invoiceItem) {
-        invoiceService.findById(invoiceItem.getInvoice().getId());
-        invoiceService.validateIsDraft(invoiceItem.getInvoice());
+    public InvoiceItem addInvoiceItem(CreateInvoiceItemCommand command) {
+        Invoice invoice = invoiceService.findById(command.invoiceId());
+        invoiceService.validateIsDraft(invoice);
+        Product product = productService.findById(command.productId());
+        InvoiceItem invoiceItem = new InvoiceItem();
+        invoiceItem.setInvoice(invoice);
+        invoiceItem.setProduct(product);
+        invoiceItem.setQuantity(command.quantity());
+        invoiceItem.setPrice(product.getPrice());
         return invoiceItemRepository.save(invoiceItem);
     }
-    public InvoiceItem updateInvoiceItem(InvoiceItem invoiceItem) {
-        InvoiceItem item = findById(invoiceItem.getId());
-        invoiceService.findById(item.getInvoice().getId());
+    public InvoiceItem updateInvoiceItem(Long invoiceItemId, UpdateInvoiceItemCommand command) {
+        InvoiceItem item = findById(invoiceItemId);
         invoiceService.validateIsDraft(item.getInvoice());
-        if(invoiceItem.getQuantity() != null){
-            item.setQuantity(invoiceItem.getQuantity());
-        }
-        if(invoiceItem.getPrice() != null){
-            item.setPrice(invoiceItem.getPrice());
-        }
-        if(invoiceItem.getProduct() != null){
-            item.setProduct(invoiceItem.getProduct());
+        if(command.quantity() != null){
+            item.setQuantity(command.quantity());
         }
         return invoiceItemRepository.save(item);
     }
