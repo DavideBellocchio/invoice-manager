@@ -1,5 +1,7 @@
 package com.davide.invoice_manager.service;
 
+import com.davide.invoice_manager.command.CreateInvoiceCommand;
+import com.davide.invoice_manager.command.UpdateInvoiceCommand;
 import com.davide.invoice_manager.domain.BusinessProfile;
 import com.davide.invoice_manager.domain.Invoice;
 import com.davide.invoice_manager.domain.InvoiceStatus;
@@ -9,6 +11,7 @@ import com.davide.invoice_manager.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -38,27 +41,29 @@ public class InvoiceService {
     public List<Invoice> findBySenderAndStatus(User sender, InvoiceStatus status) {
         return invoiceRepository.findBySenderAndStatus(sender, status);
     }
-    public Invoice createInvoice(Invoice invoice) {
-        userService.getUserById(invoice.getSender().getId());
-        businessProfileService.getBusinessProfileById(invoice.getRecipient().getId());
+    public Invoice createInvoice(CreateInvoiceCommand command) {
+        User sender = userService.getUserById(command.senderId());
+        BusinessProfile recipient = businessProfileService.getBusinessProfileById(command.recipientId());
+        Invoice invoice = new Invoice();
+        invoice.setSender(sender);
+        invoice.setRecipient(recipient);
+        invoice.setIssueDate(command.issueDate());
+        invoice.setDueDate(command.dueDate());
+        invoice.setStatus(InvoiceStatus.DRAFT);
         return invoiceRepository.save(invoice);
     }
-    public Invoice updateInvoice(Invoice invoice) {
-        Invoice i = findById(invoice.getId());
+    public Invoice updateInvoice(Long invoiceId, UpdateInvoiceCommand command) {
+        Invoice i = findById(invoiceId);
         validateIsDraft(i);
-        if(invoice.getSender() != null) {
-            userService.getUserById(invoice.getSender().getId());
-            i.setSender(invoice.getSender());
+        if(command.recipientId() != null) {
+            BusinessProfile bp = businessProfileService.getBusinessProfileById(command.recipientId());
+            i.setRecipient(bp);
         }
-        if(invoice.getRecipient() != null) {
-            businessProfileService.getBusinessProfileById(invoice.getRecipient().getId());
-            i.setRecipient(invoice.getRecipient());
+        if(command.issueDate() != null) {
+            i.setIssueDate(command.issueDate());
         }
-        if(invoice.getIssueDate() != null) {
-            i.setIssueDate(invoice.getIssueDate());
-        }
-        if(invoice.getDueDate() != null) {
-            i.setDueDate(invoice.getDueDate());
+        if(command.dueDate() != null) {
+            i.setDueDate(command.dueDate());
         }
         return invoiceRepository.save(i);
     }
