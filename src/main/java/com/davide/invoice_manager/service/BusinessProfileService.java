@@ -79,8 +79,7 @@ public class BusinessProfileService {
     }
 
     public void deleteBusinessProfile(Long id) {
-        BusinessProfile bp = businessProfileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("BusinessProfile not found for id: " + id));
+        BusinessProfile bp = getBusinessProfileById(id);
         businessProfileRepository.delete(bp);
     }
 }
