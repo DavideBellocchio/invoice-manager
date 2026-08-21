@@ -95,9 +95,9 @@ public class InvoiceService {
             throw new IllegalStateException("Invoice status must be DRAFT");
         }
     }
-    public void validateIsIssued(Invoice invoice) {
+    private void validateIsIssued(Invoice invoice) {
         if(invoice.getStatus() != InvoiceStatus.ISSUED) {
-            throw new IllegalStateException("Invoice status is " + invoice.getStatus() + ", must be issued");
+            throw new IllegalStateException("Invoice status is " + invoice.getStatus() + ", must be ISSUED");
         }
     }
 }
