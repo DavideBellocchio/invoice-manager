@@ -6,6 +6,7 @@ import com.davide.invoice_manager.command.CreateInvoiceWithItemsCommand;
 import com.davide.invoice_manager.command.InvoiceItemRequest;
 import com.davide.invoice_manager.domain.Invoice;
 import com.davide.invoice_manager.domain.InvoiceItem;
+import com.davide.invoice_manager.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,11 @@ public class InvoiceCreationService {
 
     @Transactional
     public Invoice createInvoiceWithItems(CreateInvoiceWithItemsCommand command) {
+
+        if (command.items() == null || command.items().isEmpty())  {
+            throw new IllegalArgumentException("Items not found");
+        }
+
         Invoice invoice = invoiceService.createInvoice(
                 new CreateInvoiceCommand(
                         command.senderId(),
