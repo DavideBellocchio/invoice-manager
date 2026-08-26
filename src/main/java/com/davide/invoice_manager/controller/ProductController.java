@@ -8,6 +8,7 @@ import com.davide.invoice_manager.dto.request.UpdateProductRequest;
 import com.davide.invoice_manager.dto.response.ProductResponse;
 import com.davide.invoice_manager.mapper.ProductMapper;
 import com.davide.invoice_manager.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/products")
+@RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ProductController {
 
@@ -36,17 +37,17 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> create(@RequestBody CreateProductRequest createProductRequest) {
+    public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest createProductRequest) {
         CreateProductCommand command = productMapper.toCommand(createProductRequest);
-        Product product = productService.addProduct(command);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toResponse(product));
+        ProductResponse product = productMapper.toResponse(productService.addProduct(command));
+        return ResponseEntity.status(HttpStatus.CREATED).body(product);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> update(@PathVariable Long id, @RequestBody UpdateProductRequest updateProductRequest) {
+    public ResponseEntity<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateProductRequest updateProductRequest) {
         UpdateProductCommand command = productMapper.toCommand(updateProductRequest);
-        Product product = productService.updateProduct(id, command);
-        return ResponseEntity.ok(productMapper.toResponse(product));
+        ProductResponse product = productMapper.toResponse(productService.updateProduct(id, command));
+        return ResponseEntity.ok(product);
     }
 
     @DeleteMapping("/{id}")

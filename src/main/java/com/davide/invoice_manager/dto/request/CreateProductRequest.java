@@ -1,11 +1,12 @@
 package com.davide.invoice_manager.dto.request;
 
+import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 
 public record CreateProductRequest(
-        String name,
+        @NotBlank @Size(min = 3) String name,
         String description,
-        BigDecimal price
-
+        @NotNull @Positive BigDecimal price
 ) {
 }
