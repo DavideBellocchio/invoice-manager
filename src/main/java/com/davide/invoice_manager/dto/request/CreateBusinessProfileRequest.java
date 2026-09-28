@@ -14,7 +14,7 @@ public record CreateBusinessProfileRequest(
         )
         String fiscalCode,
         @Pattern(
-                regexp = "^[0-9]{11}$",
+                regexp = "^(?:[0-9]{11})?$",
                 message = "Invalid vatCode format"
         )
         String vatCode,
@@ -23,7 +23,7 @@ public record CreateBusinessProfileRequest(
         @Email
         String pec,
         @Pattern(
-                regexp = "^\\d{9,11}$",
+                regexp = "^(?:\\d{9,11})?$",
                 message = "phoneNumber must be 9 to 11 digits"
         )
         String phoneNumber
