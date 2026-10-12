@@ -22,7 +22,8 @@ public class BusinessProfileService {
         return businessProfileRepository.findAll();
     }
 
-    public BusinessProfile getBusinessProfileByUser(User user) {
+    public BusinessProfile getBusinessProfileByUser(Long userId) {
+        User user = userService.getUserById(userId);
         return businessProfileRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("BusinessProfile not found for user: " + user.getUsername()));
     }
@@ -55,16 +56,8 @@ public class BusinessProfileService {
             existingBusinessProfile.setBusinessName(command.businessName());
         }
 
-        if(command.fiscalCode() != null) {
-            existingBusinessProfile.setFiscalCode(command.fiscalCode());
-        }
-
         if(command.vatCode() != null) {
             existingBusinessProfile.setVatCode(command.vatCode());
-        }
-
-        if(command.personType() != null) {
-            existingBusinessProfile.setPersonType(command.personType());
         }
 
         if(command.pec() != null) {

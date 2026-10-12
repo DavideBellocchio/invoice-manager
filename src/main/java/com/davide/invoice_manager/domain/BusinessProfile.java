@@ -34,7 +34,7 @@ public class BusinessProfile {
     private String pec;
     private String phoneNumber;
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", unique = true)
     private User user;
     @CreatedDate
     @Column(updatable = false)

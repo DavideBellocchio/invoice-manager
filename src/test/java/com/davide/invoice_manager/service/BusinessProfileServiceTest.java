@@ -96,9 +96,7 @@ public class BusinessProfileServiceTest {
         );
         updateBusinessProfileCommand = new UpdateBusinessProfileCommand(
                 "provaUpdate",
-                "01013",
                 "1234",
-                PersonType.FISICA,
                 "qwert",
                 "0102"
         );
@@ -114,17 +112,30 @@ public class BusinessProfileServiceTest {
 
     @Test
     public void getBusinessProfileByUser_shouldThrowException_whenProfileNotFoundForUser(){
+        Mockito.when(userService.getUserById(testUser.getId())).thenReturn(testUser);
         Mockito.when(businessProfileRepository.findByUser(testUser)).thenReturn(Optional.empty());
-        Assertions.assertThrows(ResourceNotFoundException.class, () -> businessProfileService.getBusinessProfileByUser(testUser));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> businessProfileService.getBusinessProfileByUser(testUser.getId()));
     }
 
     @Test
     public void getBusinessProfileByUser_shouldReturnBP_whenProfileExistsForUser(){
+        Mockito.when(userService.getUserById(testUser.getId())).thenReturn(testUser);
         Mockito.when(businessProfileRepository.findByUser(testUser)).thenReturn(Optional.of(testBusinessProfile2));
-        BusinessProfile businessProfile = businessProfileService.getBusinessProfileByUser(testUser);
+        BusinessProfile businessProfile = businessProfileService.getBusinessProfileByUser(testUser.getId());
         Assertions.assertEquals(testBusinessProfile2.getId(), businessProfile.getId());
         Assertions.assertEquals(testBusinessProfile2.getBusinessName(), businessProfile.getBusinessName());
         Assertions.assertEquals(testBusinessProfile2.getFiscalCode(), businessProfile.getFiscalCode());
+    }
+
+    @Test
+    public void getBusinessProfileByUser_shouldThrowException_whenUserNotFound() {
+        Mockito.when(userService.getUserById(testUser.getId()))
+                .thenThrow(new ResourceNotFoundException("User not found with id: " + testUser.getId()));
+
+        Assertions.assertThrows(ResourceNotFoundException.class,
+                () -> businessProfileService.getBusinessProfileByUser(testUser.getId()));
+
+        Mockito.verify(businessProfileRepository, Mockito.never()).findByUser(Mockito.any());
     }
 
     @Test
@@ -185,9 +196,7 @@ public class BusinessProfileServiceTest {
         Mockito.when(businessProfileRepository.save(testBusinessProfile2)).thenReturn(testBusinessProfile2);
         BusinessProfile businessProfile = businessProfileService.updateBusinessProfile(testBusinessProfile2.getId(), updateBusinessProfileCommand);
         Assertions.assertEquals(updateBusinessProfileCommand.businessName(), businessProfile.getBusinessName());
-        Assertions.assertEquals(updateBusinessProfileCommand.fiscalCode(), businessProfile.getFiscalCode());
         Assertions.assertEquals(updateBusinessProfileCommand.vatCode(), businessProfile.getVatCode());
-        Assertions.assertEquals(updateBusinessProfileCommand.personType(), businessProfile.getPersonType());
         Assertions.assertEquals(updateBusinessProfileCommand.phoneNumber(), businessProfile.getPhoneNumber());
         Assertions.assertEquals(updateBusinessProfileCommand.pec(), businessProfile.getPec());
     }
@@ -202,7 +211,7 @@ public class BusinessProfileServiceTest {
         String pecOG = testBusinessProfile2.getPec();
         Mockito.when(businessProfileRepository.findById(testBusinessProfile2.getId())).thenReturn(Optional.of(testBusinessProfile2));
         Mockito.when(businessProfileRepository.save(testBusinessProfile2)).thenReturn(testBusinessProfile2);
-        BusinessProfile businessProfile = businessProfileService.updateBusinessProfile(testBusinessProfile2.getId(), new UpdateBusinessProfileCommand(null, null, null, null, null, null));
+        BusinessProfile businessProfile = businessProfileService.updateBusinessProfile(testBusinessProfile2.getId(), new UpdateBusinessProfileCommand( null, null, null, null));
         Assertions.assertEquals(businessNameOG, businessProfile.getBusinessName());
         Assertions.assertEquals(fiscalCodeOG, businessProfile.getFiscalCode());
         Assertions.assertEquals(vatCodeOG, businessProfile.getVatCode());
