@@ -16,7 +16,7 @@ public record UpdateBusinessProfileRequest(
         @Email
         String pec,
         @Pattern(
-                regexp = "^\\d{9,11}$",
+                regexp = "^(\\d{9,11})?$",
                 message = "phoneNumber must be 9 to 11 digits"
         )
         String phoneNumber

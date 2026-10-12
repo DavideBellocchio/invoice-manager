@@ -2,15 +2,18 @@ package com.davide.invoice_manager.controller;
 
 
 import com.davide.invoice_manager.command.CreateBusinessProfileCommand;
+import com.davide.invoice_manager.command.UpdateBusinessProfileCommand;
 import com.davide.invoice_manager.domain.BusinessProfile;
 import com.davide.invoice_manager.domain.PersonType;
 import com.davide.invoice_manager.dto.request.CreateBusinessProfileRequest;
+import com.davide.invoice_manager.dto.request.UpdateBusinessProfileRequest;
 import com.davide.invoice_manager.dto.response.BusinessProfileResponse;
 import com.davide.invoice_manager.exception.ResourceNotFoundException;
 import com.davide.invoice_manager.mapper.BusinessProfileMapper;
 import com.davide.invoice_manager.service.BusinessProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -22,8 +25,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -157,5 +159,106 @@ public class BusinessProfileControllerTest {
                 .andExpect(jsonPath("$.phoneNumber").value(""))
                 .andExpect(jsonPath("$.userId").value(1));
 
+    }
+
+    @Test
+    public void shouldReturnBadRequest_whenGiuridicaHasNoVatCode() throws Exception {
+
+        mockMvc.perform(post("/api/business-profiles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"businessName\": \"ProvaAzienda\", " +
+                                "\"fiscalCode\": \"BLLDVD96H11C816J\", " +
+                                "\"vatCode\": \"\", " +
+                                "\"personType\": \"GIURIDICA\"," +
+                                "\"pec\": \"\"," +
+                                "\"phoneNumber\": \"\"," +
+                                "\"userId\":  1 " +
+                                " }"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.validVatCode").exists());
+        verify(businessProfileService, never()).createBusinessProfile(any(CreateBusinessProfileCommand.class));
+
+    }
+
+    @Test
+    public void shouldReturnBadRequest_whenFiscalCodeIsInvalid() throws Exception {
+
+        mockMvc.perform(post("/api/business-profiles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"businessName\": \"ProvaAzienda\", " +
+                                "\"fiscalCode\": \"BLLDVD96H11C816J\", " +
+                                "\"vatCode\": \"11111111111\", " +
+                                "\"personType\": \"GIURIDICA\"," +
+                                "\"pec\": \"\"," +
+                                "\"phoneNumber\": \"\"," +
+                                "\"userId\":  1 " +
+                                " }"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.fiscalCodeConsistentWithType").exists());
+        verify(businessProfileService, never()).createBusinessProfile(any(CreateBusinessProfileCommand.class));
+
+    }
+
+    @Test
+    public void shouldUpdateBusinessProfile_whenRequestIsValid() throws Exception {
+        UpdateBusinessProfileCommand update = new UpdateBusinessProfileCommand("ProvaUpdate","22222222222", "", "");
+        businessProfileResponse = new BusinessProfileResponse(1L, "ProvaUpdate", "11111111111", "22222222222", PersonType.GIURIDICA, "","",1L);
+        when(businessProfileMapper.toCommand(any(UpdateBusinessProfileRequest.class))).thenReturn(update);
+        when(businessProfileService.updateBusinessProfile(1L, update)).thenReturn(businessProfile);
+        when(businessProfileMapper.toResponse(any(BusinessProfile.class))).thenReturn(businessProfileResponse);
+
+        mockMvc.perform(put("/api/business-profiles/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"businessName\": \"ProvaUpdate\", " +
+                        "\"fiscalCode\": \"11111111111\", " +
+                        "\"vatCode\": \"22222222222\", " +
+                        "\"personType\": \"GIURIDICA\"," +
+                        "\"pec\": \"\"," +
+                        "\"phoneNumber\": \"\"," +
+                        "\"userId\":  1 " +
+                        " }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.businessName").value("ProvaUpdate"))
+                .andExpect(jsonPath("$.fiscalCode").value("11111111111"))
+                .andExpect(jsonPath("$.vatCode").value("22222222222"))
+                .andExpect(jsonPath("$.personType").value(PersonType.GIURIDICA.toString()))
+                .andExpect(jsonPath("$.pec").value(""))
+                .andExpect(jsonPath("$.phoneNumber").value(""))
+                .andExpect(jsonPath("$.userId").value(1));
+    }
+
+    @Test
+    public void shouldReturnNotFound_whenUpdatingMissingId() throws Exception {
+        UpdateBusinessProfileCommand update = new UpdateBusinessProfileCommand("ProvaUpdate","22222222222", "", "");
+        when(businessProfileMapper.toCommand(any(UpdateBusinessProfileRequest.class))).thenReturn(update);
+        when(businessProfileService.updateBusinessProfile(1L, update)).thenThrow(new ResourceNotFoundException("Business Profile not found with id: " + 1L));
+
+        mockMvc.perform(put("/api/business-profiles/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"businessName\": \"ProvaUpdate\", " +
+                        "\"fiscalCode\": \"11111111111\", " +
+                        "\"vatCode\": \"22222222222\", " +
+                        "\"personType\": \"GIURIDICA\"," +
+                        "\"pec\": \"\"," +
+                        "\"phoneNumber\": \"\"," +
+                        "\"userId\":  1 " +
+                        " }"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldDeleteBusinessProfile_whenIdExists() throws Exception {
+        mockMvc.perform(delete("/api/business-profiles/1"))
+                .andExpect(status().isNoContent());
+        Mockito.verify(businessProfileService, Mockito.times(1)).deleteBusinessProfile(1L);
+    }
+
+    @Test
+    public void shouldReturnNotFound_whenDeletingMissingId() throws Exception {
+        doThrow(new ResourceNotFoundException("Business Profile not found with id: " + 1L))
+                .when(businessProfileService).deleteBusinessProfile(1L);
+        mockMvc.perform(delete("/api/business-profiles/1"))
+                .andExpect(status().isNotFound());
     }
 }
