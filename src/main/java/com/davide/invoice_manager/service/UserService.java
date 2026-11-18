@@ -34,7 +34,7 @@ public class UserService {
     public User register(UserRegistrationCommand command) {
         String username = normalizeUsername(command.username());
         if(userRepository.existsByUsername(username)){
-            throw new ConflictException("Username already exists!");
+            throw new ConflictException("Username already exists");
         }
         User user = new User();
         user.setUsername(username);
